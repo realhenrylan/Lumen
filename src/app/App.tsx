@@ -9,7 +9,13 @@ export function App() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const resetLevel = useGameStore((s) => s.resetLevel);
   const nextLevel = useGameStore((s) => s.nextLevel);
+  const previousLevel = useGameStore((s) => s.previousLevel);
   const requestHint = useGameStore((s) => s.requestHint);
+  const initializeGame = useGameStore((s) => s.initializeGame);
+
+  useEffect(() => {
+    initializeGame();
+  }, [initializeGame]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -34,8 +40,8 @@ export function App() {
   return (
     <div className="app-root">
       <HUD />
-      <canvas ref={canvasRef} width={960} height={540} className="game-canvas" />
-      <Controls onReset={resetLevel} onHint={requestHint} onNext={nextLevel} />
+      <canvas ref={canvasRef} width={1400} height={800} className="game-canvas" />
+      <Controls onReset={resetLevel} onHint={requestHint} onNext={nextLevel} onPrevious={previousLevel} />
     </div>
   );
 }

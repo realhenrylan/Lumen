@@ -1,8 +1,12 @@
 import { useGameStore } from '../engine/gameStore';
 import { radToDeg } from '../core/math';
 
+const ROTATION_DEAD_ZONE = 0.5;
+const TOUCH_HIT_RADIUS = 0.8;
+
 export function setupPointerInput(canvas: HTMLCanvasElement): () => void {
   let activeMirrorId: string | null = null;
+  let lastAngle: number | null = null;
 
   const onPointerDown = (e: PointerEvent) => {
     const rect = canvas.getBoundingClientRect();
@@ -10,10 +14,12 @@ export function setupPointerInput(canvas: HTMLCanvasElement): () => void {
     const y = ((e.clientY - rect.top) / rect.height) * canvas.height;
 
     const level = useGameStore.getState().currentLevel;
-    const hit = level.mirrors.find((m) => Math.hypot(m.x - x, m.y - y) < m.length * 0.35 && m.rotatable);
+    const hit = level.mirrors.find((m) => Math.hypot(m.x - x, m.y - y) < m.length * TOUCH_HIT_RADIUS && m.rotatable);
     if (!hit) return;
 
     activeMirrorId = hit.id;
+    lastAngle = null;
+    useGameStore.getState().setActiveMirror(hit.id);
     canvas.setPointerCapture(e.pointerId);
   };
 
@@ -28,12 +34,26 @@ export function setupPointerInput(canvas: HTMLCanvasElement): () => void {
     const mirror = level.mirrors.find((m) => m.id === activeMirrorId);
     if (!mirror) return;
 
-    const angle = radToDeg(Math.atan2(y - mirror.y, x - mirror.x));
-    useGameStore.getState().setMirrorAngle(activeMirrorId, angle);
+    const newAngle = radToDeg(Math.atan2(y - mirror.y, x - mirror.x));
+
+    if (lastAngle !== null) {
+      let delta = newAngle - lastAngle;
+      if (delta > 180) delta -= 360;
+      if (delta < -180) delta += 360;
+      
+      if (Math.abs(delta) < ROTATION_DEAD_ZONE) {
+        return;
+      }
+    }
+
+    lastAngle = newAngle;
+    useGameStore.getState().setMirrorAngle(activeMirrorId, newAngle);
   };
 
   const onPointerUp = (e: PointerEvent) => {
     activeMirrorId = null;
+    lastAngle = null;
+    useGameStore.getState().setActiveMirror(null);
     if (canvas.hasPointerCapture(e.pointerId)) {
       canvas.releasePointerCapture(e.pointerId);
     }

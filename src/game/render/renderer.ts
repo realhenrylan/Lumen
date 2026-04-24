@@ -30,9 +30,19 @@ export function renderGame(canvas: HTMLCanvasElement, state: GameRenderState) {
     ctx.beginPath();
     ctx.moveTo(a.x, a.y);
     ctx.lineTo(b.x, b.y);
-    ctx.strokeStyle = '#C8D0DD';
-    ctx.lineWidth = 3;
+    
+    if (mirror.id === state.activeMirrorId) {
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 5;
+      ctx.shadowColor = '#6BE8FF';
+      ctx.shadowBlur = 15;
+    } else {
+      ctx.strokeStyle = '#C8D0DD';
+      ctx.lineWidth = 3;
+      ctx.shadowBlur = 0;
+    }
     ctx.stroke();
+    ctx.shadowBlur = 0;
   }
 
   const ray = raycastLevel(state.currentLevel);

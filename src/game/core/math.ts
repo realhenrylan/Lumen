@@ -40,18 +40,31 @@ export function directionFromAngle(deg: number): Point {
 export function reflect(inDir: Point, mirrorAngleDeg: number): Point {
   const mirrorRad = degToRad(mirrorAngleDeg);
   const tangent = { x: Math.cos(mirrorRad), y: Math.sin(mirrorRad) };
-  const normal = normalize({ x: -tangent.y, y: tangent.x });
+  const normal1 = normalize({ x: -tangent.y, y: tangent.x });
+  const normal2 = normalize({ x: tangent.y, y: -tangent.x });
   const d = normalize(inDir);
-  const reflected = sub(d, mul(normal, 2 * dot(d, normal)));
+  const n = dot(d, normal1) < 0 ? normal1 : normal2;
+  const reflected = sub(d, mul(n, 2 * dot(d, n)));
   return normalize(reflected);
 }
 
 export function distancePointToSegment(p: Point, a: Point, b: Point): number {
   const ab = sub(b, a);
   const ap = sub(p, a);
-  const t = Math.max(0, Math.min(1, dot(ap, ab) / (dot(ab, ab) + EPS)));
+  const abLen2 = dot(ab, ab);
+  if (abLen2 < EPS) return Math.hypot(p.x - a.x, p.y - a.y);
+  const t = Math.max(0, Math.min(1, dot(ap, ab) / abLen2));
   const proj = add(a, mul(ab, t));
   return Math.hypot(p.x - proj.x, p.y - proj.y);
+}
+
+export function isPointInSegment(p: Point, a: Point, b: Point): boolean {
+  const d = distancePointToSegment(p, a, b);
+  return d < EPS;
+}
+
+export function distanceBetweenPoints(a: Point, b: Point): number {
+  return Math.hypot(b.x - a.x, b.y - a.y);
 }
 
 export function mirrorEndpoints(x: number, y: number, length: number, angleDeg: number): [Point, Point] {
