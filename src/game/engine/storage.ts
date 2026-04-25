@@ -14,6 +14,15 @@ export interface GameSaveData {
 
 export function loadGameData(): GameSaveData {
   try {
+    if (typeof localStorage === 'undefined') {
+      return {
+        currentLevel: 0,
+        completedLevels: [],
+        isFirstVisit: true,
+        soundEnabled: true,
+      };
+    }
+
     const currentLevel = localStorage.getItem(STORAGE_KEYS.currentLevel);
     const completedLevels = localStorage.getItem(STORAGE_KEYS.completedLevels);
     const isFirstVisit = localStorage.getItem(STORAGE_KEYS.isFirstVisit);
@@ -38,6 +47,10 @@ export function loadGameData(): GameSaveData {
 
 export function saveGameData(data: Partial<GameSaveData>): void {
   try {
+    if (typeof localStorage === 'undefined') {
+      return;
+    }
+
     if (data.currentLevel !== undefined) {
       localStorage.setItem(STORAGE_KEYS.currentLevel, data.currentLevel.toString());
     }
@@ -57,6 +70,10 @@ export function saveGameData(data: Partial<GameSaveData>): void {
 
 export function clearGameData(): void {
   try {
+    if (typeof localStorage === 'undefined') {
+      return;
+    }
+
     Object.values(STORAGE_KEYS).forEach(key => {
       localStorage.removeItem(key);
     });

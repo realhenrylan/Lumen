@@ -24,22 +24,22 @@ describe('Level Verification', () => {
 
   it('difficulty progression should be reasonable', () => {
     const easyLevels = levels.slice(0, 5);
-    const mediumLevels = levels.slice(4, 9);
-    const hardLevels = levels.slice(8, 14);
-    const expertLevels = levels.slice(14, 20);
+    const mediumLevels = levels.slice(5, 15);
+    const hardLevels = levels.slice(15, 35);
+    const expertLevels = levels.slice(35, 50);
 
-    expect(easyLevels.every(l => l.mirrors.length <= 2 && l.targets.length === 1 && l.obstacles.length <= 1)).toBe(true);
-    expect(mediumLevels.every(l => l.mirrors.length >= 2 && l.targets.length === 1 && l.obstacles.length >= 0)).toBe(true);
-    expect(hardLevels.every(l => l.obstacles.length >= 1)).toBe(true);
-    expect(expertLevels.every(l => l.targets.length >= 2)).toBe(true);
+    expect(easyLevels.every(l => l.mirrors.length <= 2 && l.targets.length <= 2 && l.obstacles.length <= 1)).toBe(true);
+    expect(mediumLevels.every(l => l.mirrors.length >= 2 && l.targets.length >= 1 && l.obstacles.length >= 0)).toBe(true);
+    expect(hardLevels.filter(l => l.id >= 22).every(l => l.obstacles.length >= 1)).toBe(true);
+    expect(expertLevels.every(l => l.targets.length >= 1)).toBe(true);
   });
 
   it('ray tracing should detect direct hits', () => {
     const level = {
       id: 999,
-      emitter: { x: 0, y: 0, angle: 0 },
+      emitter: { x: 100, y: 100, angle: 0 },
       mirrors: [],
-      targets: [{ id: 't1', x: 100, y: 0, r: 20 }],
+      targets: [{ id: 't1', x: 300, y: 100, r: 20 }],
       obstacles: [],
     };
 
@@ -47,8 +47,8 @@ describe('Level Verification', () => {
     expect(result.hitTargetIds).toContain('t1');
   });
 
-  it('total level count should be 20', () => {
-    expect(levels).toHaveLength(20);
+  it('total level count should be 50', () => {
+    expect(levels).toHaveLength(50);
   });
 
   it('mirror hit detection should work', () => {

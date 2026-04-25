@@ -197,12 +197,12 @@ describe('Raycast', () => {
           x: 200,
           y: 270,
           length: 100,
-          angle: 0,
+          angle: 45,
           rotatable: true,
         }],
         targets: [
           { id: 't1', x: 100, y: 270, r: 10 },
-          { id: 't2', x: 400, y: 270, r: 10 },
+          { id: 't2', x: 200, y: 170, r: 10 },
         ],
         obstacles: [],
       };

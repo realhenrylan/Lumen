@@ -27,11 +27,11 @@ describe('Game Store', () => {
 
     it('does not exceed last level', () => {
       const state = useGameStore.getState();
-      for (let i = 0; i < 25; i++) {
+      for (let i = 0; i < 55; i++) {
         state.nextLevel();
       }
       const newState = useGameStore.getState();
-      expect(newState.levelIndex).toBeLessThan(20);
+      expect(newState.levelIndex).toBeLessThan(50);
     });
 
     it('resets current level', () => {
