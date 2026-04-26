@@ -93,79 +93,86 @@ function renderObstacles(ctx: CanvasRenderingContext2D, obstacles: Array<{ id: s
   ctx.fill();
 }
 
+const targetGlowState = new Map<string, { startTime: number; alpha: number }>();
+
 function renderTargets(
   ctx: CanvasRenderingContext2D,
   targets: Array<{ id: string; x: number; y: number; r: number }>,
   hitIds: string[]
 ) {
   const hitSet = new Set(hitIds);
-  
-  // 未击中目标 - 暗淡深色
-  ctx.beginPath();
-  ctx.strokeStyle = COLORS.targetStroke;
-  ctx.lineWidth = 3;
-  ctx.fillStyle = COLORS.targetFill;
-  
+  const now = performance.now();
+  const GLOW_DURATION = 1600;
+  const FADE_DURATION = 400;
+
   for (const target of targets) {
-    if (!hitSet.has(target.id)) {
-      ctx.moveTo(target.x + target.r, target.y);
-      ctx.arc(target.x, target.y, target.r, 0, Math.PI * 2);
+    const isHit = hitSet.has(target.id);
+    let glowData = targetGlowState.get(target.id);
+
+    if (isHit) {
+      if (!glowData) {
+        glowData = { startTime: now, alpha: 0 };
+        targetGlowState.set(target.id, glowData);
+      }
+      const elapsed = now - glowData.startTime;
+      glowData.alpha = Math.min(1, elapsed / GLOW_DURATION);
+    } else {
+      if (glowData && glowData.alpha > 0) {
+        glowData.alpha = Math.max(0, glowData.alpha - 0.02);
+        if (glowData.alpha === 0) {
+          targetGlowState.delete(target.id);
+        }
+      }
+    }
+
+    const alpha = glowData?.alpha ?? 0;
+    const r = target.r;
+    const x = target.x;
+    const y = target.y;
+
+    if (alpha < 1) {
+      ctx.beginPath();
+      ctx.strokeStyle = COLORS.targetStroke;
+      ctx.lineWidth = 3;
+      ctx.fillStyle = COLORS.targetFill;
+      ctx.moveTo(x + r, y);
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.strokeStyle = COLORS.targetStroke;
+      ctx.lineWidth = 2;
+      ctx.moveTo(x + r, y);
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    if (alpha > 0) {
+      const strokeAlpha = Math.floor(alpha * 255).toString(16).padStart(2, '0');
+
+      ctx.beginPath();
+      ctx.strokeStyle = `${COLORS.targetHit}${strokeAlpha}`;
+      ctx.lineWidth = 4;
+      ctx.fillStyle = `rgba(126, 231, 135, ${alpha * 0.4})`;
+      ctx.moveTo(x + r * 1.5, y);
+      ctx.arc(x, y, r * 1.5, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.fillStyle = `rgba(126, 231, 135, ${alpha * 0.4})`;
+      ctx.moveTo(x + r, y);
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.strokeStyle = `${COLORS.targetHit}${strokeAlpha}`;
+      ctx.lineWidth = 2;
+      ctx.moveTo(x + r * 0.6, y);
+      ctx.arc(x, y, r * 0.6, 0, Math.PI * 2);
+      ctx.stroke();
     }
   }
-  ctx.fill();
-  ctx.stroke();
-  
-  // 未击中 - 外圈
-  ctx.beginPath();
-  ctx.strokeStyle = COLORS.targetStroke;
-  ctx.lineWidth = 2;
-  
-  for (const target of targets) {
-    if (!hitSet.has(target.id)) {
-      ctx.moveTo(target.x + target.r, target.y);
-      ctx.arc(target.x, target.y, target.r, 0, Math.PI * 2);
-    }
-  }
-  ctx.stroke();
-  
-  // 已击中目标 - 发光效果
-  ctx.beginPath();
-  ctx.strokeStyle = COLORS.targetHit;
-  ctx.lineWidth = 4;
-  ctx.fillStyle = COLORS.targetHitFill;
-  
-  for (const target of targets) {
-    if (hitSet.has(target.id)) {
-      // 外发光
-      ctx.moveTo(target.x + target.r * 1.5, target.y);
-      ctx.arc(target.x, target.y, target.r * 1.5, 0, Math.PI * 2);
-    }
-  }
-  ctx.stroke();
-  
-  ctx.beginPath();
-  ctx.fillStyle = COLORS.targetHitFill;
-  
-  for (const target of targets) {
-    if (hitSet.has(target.id)) {
-      ctx.moveTo(target.x + target.r, target.y);
-      ctx.arc(target.x, target.y, target.r, 0, Math.PI * 2);
-    }
-  }
-  ctx.fill();
-  
-  // 内发光核心
-  ctx.beginPath();
-  ctx.strokeStyle = COLORS.targetHit;
-  ctx.lineWidth = 2;
-  
-  for (const target of targets) {
-    if (hitSet.has(target.id)) {
-      ctx.moveTo(target.x + target.r * 0.6, target.y);
-      ctx.arc(target.x, target.y, target.r * 0.6, 0, Math.PI * 2);
-    }
-  }
-  ctx.stroke();
 }
 
 function renderHintMirrorsOptimized(ctx: CanvasRenderingContext2D, state: GameRenderState) {

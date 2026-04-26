@@ -74,6 +74,10 @@ body,
   background: var(--color-bg);
   cursor: crosshair;
   display: block;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 /* 左上角 - 暂停按钮 */
@@ -129,15 +133,16 @@ body,
 
 .hud-item .level-display {
   font-family: "Baquet Script", "Harlow Solid Italic", "Harlow", "Broadway", "Script MT", cursive;
-  font-size: 28px;
+  font-size: clamp(24px, 4vw, 36px);
   font-weight: 400;
   font-style: italic;
   color: var(--color-text);
   text-shadow: 
     0 0 10px rgba(255, 255, 255, 0.8),
     0 0 20px rgba(255, 255, 255, 0.6),
-    0 0 30px rgba(255, 255, 255, 0.4);
-  letter-spacing: 2px;
+    0 0 30px rgba(255, 255, 255, 0.4),
+    0 0 40px rgba(255, 255, 255, 0.2);
+  letter-spacing: clamp(4px, 1vw, 8px);
 }
 
 /* 暂停图标 */
@@ -173,8 +178,8 @@ body,
 
 /* 提示图标 */
 .hint-icon {
-  width: 56px;
-  height: 56px;
+  width: 44px;
+  height: 44px;
   cursor: pointer;
   color: var(--color-text);
   transition: all 0.3s ease;
@@ -184,8 +189,8 @@ body,
 }
 
 .hint-icon svg {
-  width: 48px;
-  height: 48px;
+  width: 36px;
+  height: 36px;
 }
 
 .hint-icon:hover {
@@ -195,8 +200,8 @@ body,
 
 /* 重置图标 */
 .reset-icon {
-  width: 56px;
-  height: 56px;
+  width: 44px;
+  height: 44px;
   cursor: pointer;
   color: var(--color-text);
   transition: all 0.3s ease;
@@ -206,8 +211,8 @@ body,
 }
 
 .reset-icon svg {
-  width: 48px;
-  height: 48px;
+  width: 36px;
+  height: 36px;
 }
 
 .reset-icon:hover {
@@ -221,12 +226,12 @@ body,
   display: flex;
   justify-content: flex-end;
   align-items: flex-start;
-  padding: 20px 24px;
+  padding: 8px 12px;
 }
 
 .top-right-buttons {
   display: flex;
-  gap: 24px;
+  gap: 16px;
   align-items: flex-start;
 }
 
@@ -387,6 +392,26 @@ button:disabled {
   animation: slideIn 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.clear-screen.fade-out {
+  animation: fadeOut 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.clear-content {
+  text-align: center;
+  padding: 60px 80px;
+  background: #161B22;
+  border-radius: 24px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  transform: translateY(30px) scale(0.95);
+  transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.clear-content.show {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
 @keyframes slideIn {
   from {
     opacity: 0;
@@ -398,13 +423,13 @@ button:disabled {
   }
 }
 
-.clear-content {
-  text-align: center;
-  padding: 60px 80px;
-  background: #161B22;
-  border-radius: 24px;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
-  animation: contentPop 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.2s both;
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 
 @keyframes contentPop {

@@ -1,5 +1,4 @@
 import { useGameStore } from '../game/engine/gameStore';
-import { levels } from '../levels';
 
 export function HUD() {
   const levelIndex = useGameStore((s) => s.levelIndex);

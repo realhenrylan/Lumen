@@ -27,40 +27,70 @@ export function App() {
   const clearScreen = useGameStore((s) => s.clearScreen);
   const setPaused = useGameStore((s) => s.setPaused);
 
-  // 初始化游戏
+  const lastRenderStateRef = useRef<any>(null);
+  const needsRenderRef = useRef(true);
+
   useEffect(() => {
     initializeGame();
   }, [initializeGame]);
 
-  // 渲染循环 - 必须在条件语句之前
   useEffect(() => {
-    // 如果显示菜单、暂停或过关界面，不初始化渲染循环
     if (showMenu || paused || clearScreen) return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    // 设置输入处理
     const cleanupInput = setupPointerInput(canvas);
     
     let raf = 0;
+    let lastFrameTime = 0;
+    const TARGET_FPS = 60;
+    const FRAME_INTERVAL = 1000 / TARGET_FPS;
 
-    const frame = () => {
-      // 获取当前状态
-      const state = useGameStore.getState();
+    const shouldRender = (state: any): boolean => {
+      const last = lastRenderStateRef.current;
+      if (!last) return true;
+
+      if (state.levelIndex !== last.levelIndex) return true;
+      if (state.activeMirrorId !== last.activeMirrorId) return true;
+      if (state.hintMode !== last.hintMode) return true;
       
-      // 渲染游戏（使用store中的光线追踪结果）
-      renderGame(canvas, {
-        ...state,
-        hitTargetIds: state.rayResult.hitTargetIds,
-      });
+      const currentAngles = state.currentLevel.mirrors.map((m: any) => `${m.id}:${m.angle}`).join(',');
+      const lastAngles = last.currentLevel?.mirrors.map((m: any) => `${m.id}:${m.angle}`).join(',');
+      if (currentAngles !== lastAngles) return true;
+      
+      const currentHits = (state.rayResult?.hitTargetIds || []).sort().join(',');
+      const lastHits = (last.rayResult?.hitTargetIds || []).sort().join(',');
+      if (currentHits !== lastHits) return true;
+
+      const hasTargets = state.currentLevel.targets.length > 0;
+      if (hasTargets) return true;
+      
+      return false;
+    };
+
+    const frame = (timestamp: number) => {
+      const deltaTime = timestamp - lastFrameTime;
+      
+      if (deltaTime >= FRAME_INTERVAL) {
+        lastFrameTime = timestamp - (deltaTime % FRAME_INTERVAL);
+        
+        const state = useGameStore.getState();
+        
+        if (shouldRender(state)) {
+          renderGame(canvas, {
+            ...state,
+            hitTargetIds: state.rayResult.hitTargetIds,
+          });
+          lastRenderStateRef.current = state;
+        }
+      }
       
       raf = requestAnimationFrame(frame);
     };
 
-    frame();
+    raf = requestAnimationFrame(frame);
 
-    // 清理函数
     return () => {
       cancelAnimationFrame(raf);
       cleanupInput();
@@ -91,18 +121,16 @@ export function App() {
       <div className="top-right">
         <div className="top-right-buttons">
           <div className="hint-icon" onClick={requestHint}>
-            <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-              <circle cx="24" cy="24" r="20" stroke="currentColor" strokeWidth="3" fill="none"/>
-              <path d="M20 20C20 16 24 14 24 14C24 14 28 16 28 20C28 22 26 24 24 24" stroke="currentColor" strokeWidth="3" strokeLinecap="round" fill="none"/>
-              <circle cx="24" cy="32" r="2" fill="currentColor"/>
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
             </svg>
           </div>
           <div className="reset-icon" onClick={resetLevel}>
-            <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-              <path d="M8 24C8 15.2 15.2 8 24 8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" fill="none"/>
-              <path d="M8 8L16 8L8 16" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-              <path d="M40 24C40 32.8 32.8 40 24 40" stroke="currentColor" strokeWidth="3" strokeLinecap="round" fill="none"/>
-              <path d="M40 40L32 40L40 32" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="1 4 1 10 7 10"/>
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
             </svg>
           </div>
         </div>

@@ -3,11 +3,15 @@ import { radToDeg } from '../core/math';
 
 const ROTATION_DEAD_ZONE = 0.5;
 const TOUCH_HIT_RADIUS = 0.8;
+const MIN_DRAG_DISTANCE = 10;
 
 export function setupPointerInput(canvas: HTMLCanvasElement): () => void {
   let activeMirrorId: string | null = null;
   let lastAngle: number | null = null;
   let isHintDrag: boolean = false;
+  let initialPointerX: number = 0;
+  let initialPointerY: number = 0;
+  let initialMirrorAngle: number = 0;
 
   const onPointerDown = (e: PointerEvent) => {
     const rect = canvas.getBoundingClientRect();
@@ -22,6 +26,9 @@ export function setupPointerInput(canvas: HTMLCanvasElement): () => void {
     activeMirrorId = hit.id;
     lastAngle = null;
     isHintDrag = state.hintMode;
+    initialPointerX = x;
+    initialPointerY = y;
+    initialMirrorAngle = hit.angle;
     useGameStore.getState().setActiveMirror(hit.id);
     canvas.setPointerCapture(e.pointerId);
   };
@@ -37,7 +44,17 @@ export function setupPointerInput(canvas: HTMLCanvasElement): () => void {
     const mirror = level.mirrors.find((m) => m.id === activeMirrorId);
     if (!mirror) return;
 
-    const newAngle = radToDeg(Math.atan2(y - mirror.y, x - mirror.x));
+    const dx = x - initialPointerX;
+    const dy = y - initialPointerY;
+    const dragDistance = Math.hypot(dx, dy);
+
+    if (dragDistance < MIN_DRAG_DISTANCE) {
+      return;
+    }
+
+    const relativeDx = dx;
+    const relativeDy = dy;
+    let newAngle = initialMirrorAngle + radToDeg(Math.atan2(relativeDy, relativeDx));
 
     if (lastAngle !== null) {
       let delta = newAngle - lastAngle;

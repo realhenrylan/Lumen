@@ -100,6 +100,8 @@ export const useGameStore = create<GameState>((set, get) => {
   const initialLevel = cloneLevel(levels[0]);
   const initialRayResult = raycastLevel(initialLevel);
   
+  let clearScreenTimer: ReturnType<typeof setTimeout> | null = null;
+  
   return {
     levelIndex: 0,
     currentLevel: initialLevel,
@@ -138,12 +140,12 @@ export const useGameStore = create<GameState>((set, get) => {
     setMirrorAngle: (mirrorId, angle) => {
       const state = get();
       if (state.frozen || state.solved) return;
+      
       const next = cloneLevel(state.currentLevel);
       const mirror = next.mirrors.find((m) => m.id === mirrorId);
       if (!mirror || !mirror.rotatable) return;
       mirror.angle = angle;
       
-      // 计算光线追踪结果
       const rayResult = raycastLevel(next);
       const solved = rayResult.hitTargetIds.length === next.targets.length;
       
@@ -152,7 +154,6 @@ export const useGameStore = create<GameState>((set, get) => {
         solved,
         hintText: null,
         frozen: solved,
-        clearScreen: solved,
         hintMirrorAngles: [],
         hintMode: false,
         rayResult,
@@ -162,6 +163,15 @@ export const useGameStore = create<GameState>((set, get) => {
         const newCompletedLevels = [...state.completedLevels, state.levelIndex + 1];
         set({ completedLevels: newCompletedLevels });
         markLevelComplete(state.levelIndex + 1);
+        
+        if (clearScreenTimer) {
+          clearTimeout(clearScreenTimer);
+        }
+        
+        clearScreenTimer = setTimeout(() => {
+          set({ clearScreen: true });
+          clearScreenTimer = null;
+        }, 1600);
       }
 
       saveGameData({ currentLevel: state.levelIndex });
@@ -182,6 +192,10 @@ export const useGameStore = create<GameState>((set, get) => {
     },
 
     resetLevel: () => {
+      if (clearScreenTimer) {
+        clearTimeout(clearScreenTimer);
+        clearScreenTimer = null;
+      }
       const idx = get().levelIndex;
       const fresh = cloneLevel(levels[idx]);
       const rayResult = raycastLevel(fresh);
@@ -198,6 +212,10 @@ export const useGameStore = create<GameState>((set, get) => {
     },
 
     nextLevel: () => {
+      if (clearScreenTimer) {
+        clearTimeout(clearScreenTimer);
+        clearScreenTimer = null;
+      }
       const nextIndex = Math.min(get().levelIndex + 1, levels.length - 1);
       const fresh = cloneLevel(levels[nextIndex]);
       const rayResult = raycastLevel(fresh);
@@ -217,6 +235,10 @@ export const useGameStore = create<GameState>((set, get) => {
     },
 
     previousLevel: () => {
+      if (clearScreenTimer) {
+        clearTimeout(clearScreenTimer);
+        clearScreenTimer = null;
+      }
       const prevIndex = Math.max(get().levelIndex - 1, 0);
       const fresh = cloneLevel(levels[prevIndex]);
       const rayResult = raycastLevel(fresh);
@@ -262,6 +284,10 @@ export const useGameStore = create<GameState>((set, get) => {
     },
 
     setLevelByIndex: (index) => {
+      if (clearScreenTimer) {
+        clearTimeout(clearScreenTimer);
+        clearScreenTimer = null;
+      }
       const validIndex = Math.max(0, Math.min(index, levels.length - 1));
       const fresh = cloneLevel(levels[validIndex]);
       const rayResult = raycastLevel(fresh);
@@ -286,6 +312,10 @@ export const useGameStore = create<GameState>((set, get) => {
     },
 
     setClearScreen: (show) => {
+      if (!show && clearScreenTimer) {
+        clearTimeout(clearScreenTimer);
+        clearScreenTimer = null;
+      }
       set({ clearScreen: show });
     },
 
